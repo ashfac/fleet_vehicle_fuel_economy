@@ -1,0 +1,28 @@
+<odoo>
+  <data>
+    <!-- <record id="fleet_vehicle_form" model="ir.ui.view">
+        <field name="name">fleet.vehicle.info</field>
+        <field name="model">fleet.vehicle</field>
+        <field name="inherit_id" ref="fleet.fleet_vehicle_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='acquisition_date']" position="before">
+                <label for="mileage" attrs="{'invisible': [('vehicle_type', '!=', 'car')]}"/>
+                <div class="o_row" attrs="{'invisible': [('vehicle_type', '!=', 'car')]}">
+                    <field name="mileage"/>
+                    <field name="mileage_unit"/>
+                </div>
+            </xpath>
+            <xpath expr="//field[@name='fuel_type']" position="after">
+                <label for="fuel_tank_capacity"/>
+                <div class="o_row">
+                    <field name="fuel_tank_capacity"/>
+                </div>
+                <label for="fuel_economy"/>
+                <div class="o_row">
+                    <field name="fuel_economy"/>
+                </div>
+            </xpath>
+        </field>
+    </record> -->
+  </data>
+</odoo>

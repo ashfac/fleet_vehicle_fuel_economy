@@ -1,0 +1,58 @@
+<odoo>
+  <data>
+
+    <record id="fleet_vehicle_log_services_view_form" model="ir.ui.view">
+        <field name="name">fleet.vehicle.log.services.fuel</field>
+        <field name="model">fleet.vehicle.log.services</field>
+        <field name="inherit_id" ref="fleet.fleet_vehicle_log_services_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='amount']" position="before">
+              <field name="fuel"/>
+            </xpath>
+            <xpath expr="//field[@name='purchaser_id']" position="after">
+                <field name="previous_odometer_id" invisible="1"/>
+                <label for="previous_odometer"/>
+                <div class="o_row">
+                    <field name="previous_odometer"/>
+                    <field name="odometer_unit"/>
+                </div>
+            </xpath>
+            <xpath expr="/form/sheet/group/group[2]" position="inside">
+              <label for="mileage"/>
+              <div class="o_row">
+                  <field name="mileage"/>
+                  <field name="mileage_unit"/>
+              </div>
+            </xpath>
+        </field>
+    </record>
+
+    <record id='fleet_vehicle_log_services_view_tree' model='ir.ui.view'>
+        <field name="name">fleet.vehicle.log.services.tree</field>
+        <field name="model">fleet.vehicle.log.services</field>
+        <field name="inherit_id" ref="fleet.fleet_vehicle_log_services_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='date']" position="after">
+                <xpath expr="//field[@name='purchaser_id']" position="move"/>
+                <xpath expr="//field[@name='vehicle_id']" position="move"/>
+                <xpath expr="//field[@name='vendor_id']" position="move"/>
+                <xpath expr="//field[@name='service_type_id']" position="move"/>
+            </xpath> 
+            <xpath expr="//field[@name='purchaser_id']" position="replace">
+                <field name="purchaser_id" readonly="1" widget="many2one_avatar" optional="hide"/>
+            </xpath>
+            <xpath expr="//field[@name='vehicle_id']" position="replace">
+                <field name="vehicle_id" readonly="1" widget="many2one_avatar" optional="hide"/>
+            </xpath>
+            <xpath expr="//field[@name='vendor_id']" position="replace">
+                <field name="vendor_id" readonly="1" widget="many2one_avatar" optional="hide"/>
+            </xpath>
+            <xpath expr="//field[@name='amount']" position="before">
+                <field name="odometer"/>
+                <field name="mileage"/>
+            </xpath>
+        </field>
+    </record>
+
+  </data>
+</odoo>
