@@ -2,7 +2,6 @@
 import logging
 
 from odoo import models, fields, api
-from odoo.exceptions import UserError
 
 _logger = logging.getLogger(__name__)
 
@@ -10,7 +9,7 @@ class FleetVehicleLogServices(models.Model):
     _name = 'fleet.vehicle.log.services'
     _inherit = ["fleet.vehicle.log.services"]
 
-    fuel = fields.Float("Fuel", store=True)
+    fuel = fields.Float("Fuel", store=True,  readonly=False)
 
     @api.onchange('vehicle_id', 'service_type_id')
     def _get_previous_odometer_id(self):
@@ -54,17 +53,16 @@ class FleetVehicleLogServices(models.Model):
 
     def _set_previous_odometer(self):
         for record in self:
-            if not record.previous_odometer:
-                raise UserError('Emptying the odometer value of a vehicle is not allowed.')
-            
-            FleetVehicalOdometer = self.env['fleet.vehicle.odometer']
-            odometer = FleetVehicalOdometer.search([('value', '=', record.previous_odometer)], limit=1, order='value desc')
+            odometer = 0
+            if record.previous_odometer:
+                FleetVehicalOdometer = self.env['fleet.vehicle.odometer']
+                odometer = FleetVehicalOdometer.search([('value', '=', record.previous_odometer)], limit=1, order='value desc')
 
             if odometer:
                 _logger.info('_set_previous_odometer::previous_odometer exists: %r = %r', odometer.id, odometer.value )
                 self.previous_odometer_id = odometer
 
-            if not odometer:
+            else:
                 new_odometer = self.env['fleet.vehicle.odometer'].create({
                     'value': record.previous_odometer,
                     'date': record.date or fields.Date.context_today(record),
@@ -78,6 +76,8 @@ class FleetVehicleLogServices(models.Model):
         for record in self:
             if record.odometer and record.previous_odometer and record.odometer > record.previous_odometer:
                 record.mileage = record.odometer - record.previous_odometer
+            elif not record.previous_odometer:
+                record.mileage = record.odometer
             else:
                 record.mileage = 0
 

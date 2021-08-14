@@ -6,7 +6,7 @@
         <field name="model">fleet.vehicle.log.services</field>
         <field name="inherit_id" ref="fleet.fleet_vehicle_log_services_view_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//field[@name='amount']" position="before">
+            <xpath expr="//field[@name='date']" position="after">
               <field name="fuel"/>
             </xpath>
             <xpath expr="//field[@name='purchaser_id']" position="after">
@@ -50,6 +50,7 @@
             <xpath expr="//field[@name='amount']" position="before">
                 <field name="odometer"/>
                 <field name="mileage"/>
+                <field name="fuel"/>
             </xpath>
         </field>
     </record>
