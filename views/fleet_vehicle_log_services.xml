@@ -18,11 +18,14 @@
                 </div>
             </xpath>
             <xpath expr="/form/sheet/group/group[2]" position="inside">
-              <label for="mileage"/>
+              <label for="mileage" attrs="{'invisible':[('mileage','==',0)]}"/>
               <div class="o_row">
-                  <field name="mileage"/>
-                  <field name="mileage_unit"/>
+                  <field name="mileage" attrs="{'invisible':[('mileage','==',0)]}"/>
+                  <field name="odometer_unit" attrs="{'invisible':[('mileage','==',0)]}"/>
               </div>
+              <field name="fuel_economy" attrs="{'invisible':[('fuel_economy','==',0)]}"/>
+              <field name="fuel_economy_mpg" attrs="{'invisible':[('fuel_economy_mpg','==',0)]}"/>
+              <field name="price_per_liter" attrs="{'invisible':[('price_per_liter','==',0)]}"/>
             </xpath>
         </field>
     </record>
@@ -50,7 +53,11 @@
             <xpath expr="//field[@name='amount']" position="before">
                 <field name="odometer"/>
                 <field name="mileage"/>
+                <field name="full_tank_mileage" optional="hide"/>
                 <field name="fuel"/>
+                <field name="fuel_economy"/>
+                <field name="fuel_economy_mpg"/>
+                <field name="price_per_liter" optional="hide"/>
             </xpath>
         </field>
     </record>

@@ -11,11 +11,33 @@ class FleetVehicleLogServices(models.Model):
 
     fuel = fields.Float("Fuel", store=True,  readonly=False)
 
+    previous_odometer = fields.Float(compute="_get_previous_odometer", inverse='_set_previous_odometer', store=False, readonly=False,
+        string="Previous Odometer",
+        help='Odometer measure of the vehicle at previous service interval of this type')
+
+    mileage = fields.Float(compute="_compute_mileage", store=False, readonly=True,
+        string="Mileage",
+        help="Mileage since previous service interval of this type")
+
+    full_tank_mileage = fields.Float(compute="_compute_full_tank_mileage", store=False, readonly=True,
+        string="Full Tank Mileage",
+        help="Extrapolated mileage if the vehicle were to use all the fuel in the tank")
+
+    fuel_economy = fields.Float(compute="_compute_fuel_economy", store=True, readonly=True,
+        string="l/100km",
+        help="Fuel economoy in Liter/100 km")
+
+    fuel_economy_mpg = fields.Float(compute="_compute_fuel_economy_mpg", store=False, readonly=True,
+        string="MPG",
+        help="Fuel economoy in MPG")
+
+    price_per_liter = fields.Float(compute="_compute_price_per_liter", store=False, readonly=True,
+        string="Price/Liter",
+        help="Calculated price of fuel per liter")
+
     @api.onchange('vehicle_id', 'service_type_id')
     def _get_previous_odometer_id(self):
         for record in self:
-            _logger.info('_get_previous_odometer_id::record : %r', record )
-
             FleetVehicalServices = self.env['fleet.vehicle.log.services']
             previous_service = FleetVehicalServices.search([('vehicle_id', '=', record.vehicle_id.id), ('service_type_id', '=', record.service_type_id.id)],
             limit=1, order='id desc')
@@ -33,17 +55,7 @@ class FleetVehicleLogServices(models.Model):
                     _logger.info('_get_previous_odometer_id::previous_odometer_id(odometer) : %r = %r', previous_odometer.id, previous_odometer.value )
 
     previous_odometer_id = fields.Many2one('fleet.vehicle.odometer', 'Odometer', default=_get_previous_odometer_id, store=True,
-        help='Odometer measure of the vehicle at previous service of this type')
-
-    previous_odometer = fields.Float(compute="_get_previous_odometer", inverse='_set_previous_odometer', store=False, readonly=False,
-        string="Previous Odometer",
-        help='Odometer measure of the vehicle at previous service of this type')
-
-    mileage = fields.Float(compute="_compute_mileage", store=False, readonly=True,
-        string="Mileage",
-        help="Mileage since previous service interval of this type")
-
-    mileage_unit = fields.Selection(related='odometer_unit', string="Unit", readonly=True)
+        help='Odometer measure of the vehicle at previous service interval of this type')
 
     @api.onchange('previous_odometer_id')
     def _get_previous_odometer(self):
@@ -76,58 +88,38 @@ class FleetVehicleLogServices(models.Model):
         for record in self:
             if record.odometer and record.previous_odometer and record.odometer > record.previous_odometer:
                 record.mileage = record.odometer - record.previous_odometer
-            elif not record.previous_odometer:
-                record.mileage = record.odometer
             else:
-                record.mileage = 0
+                record.mileage = 0.0
 
-    # full_tank_mileage = fields.Float("Full Tank Mileage", compute="_compute_full_tank_mileage", store=True)
-    # fuel_economy = fields.Float("L/100 km", compute="_compute_fuel_economy", store=True)
-    # price_per_liter = fields.Float("Price Per Liter", compute="_compute_price_per_liter", store=True)
+    @api.depends('fuel', 'mileage')
+    def _compute_fuel_economy(self):
+        for record in self:
+            if record.mileage == 0 or record.fuel == 0:
+                record['fuel_economy'] = 0.0
+            else:
+                record['fuel_economy'] = 100 * record.fuel / record.mileage
 
-    # fuel_economy_average = fields.Float(related='fleet.vehicle.fuel_economy')
+    @api.depends('fuel_economy')
+    def _compute_fuel_economy_mpg(self):
+        for record in self:
+            if record.fuel_economy == 0:
+                record['fuel_economy_mpg'] = 0.0
+            else:
+                record['fuel_economy_mpg'] = 235.214583 / record.fuel_economy
 
-    # @api.depends('fuel', 'mileage')
-    # def _compute_full_tank_mileage(self):
-    #     for record in self:
-    #         if record.fuel == 0:
-    #             record['full_tank_mileage'] = 0
-    #         else:
-    #             fuel_tank_capacity = self.env['fleet.vehicle'].search([('id', '=', record.vehicle_id.id)])[0].fuel_tank_capacity
-    #             record['full_tank_mileage'] = fuel_tank_capacity * record.mileage / record.fuel
 
-    # @api.depends('fuel', 'mileage')
-    # def _compute_fuel_economy(self):
-    #     # compute average value along the way and replace empty values with the overall average
-    #     sum = 0
-    #     count = 0
-    #     for record in self:
-    #         if record.mileage == 0 or record.fuel == 0:
-    #             record['fuel_economy'] = 0
-    #         else:
-    #             record['fuel_economy'] = 100 * record.fuel / record.mileage
-    #             sum += record['fuel_economy']
-    #             count += 1
+    @api.depends('fuel', 'mileage')
+    def _compute_full_tank_mileage(self):
+        for record in self:
+            if record.fuel == 0:
+                record['full_tank_mileage'] = 0.0
+            else:
+                record['full_tank_mileage'] = record.vehicle_id.fuel_tank_capacity * record.mileage / record.fuel
 
-    #     # compute average
-    #     # self.refueling_count = count
-    #     # self.fuel_economy_average = 0
-    #     # if count > 0:
-    #     #     self.fuel_economy_average = sum / count
-
-    #     # length = len(self)
-    #     # if length > 0:
-    #     #     self[0]['fuel_economy'] = average_fuel_economy
-
-    #     # for x in range(1, length):
-    #     #     if self[x]['fuel_economy'] == 0:
-    #     #         self[x]['fuel_economy'] = self[x-1]['fuel_economy']
-
-    # @api.depends('fuel', 'amount')
-    # def _compute_price_per_liter(self):
-    #     for record in self:
-    #         if record.fuel == 0:
-    #             record['price_per_liter'] = 0
-    #         else:
-    #             record['price_per_liter'] = record.amount / record.fuel
-
+    @api.depends('fuel', 'amount')
+    def _compute_price_per_liter(self):
+        for record in self:
+            if record.fuel == 0:
+                record['price_per_liter'] = 0.0
+            else:
+                record['price_per_liter'] = record.amount / record.fuel
