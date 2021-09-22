@@ -6,8 +6,14 @@
         <field name="model">fleet.vehicle.log.services</field>
         <field name="inherit_id" ref="fleet.fleet_vehicle_log_services_view_form"/>
         <field name="arch" type="xml">
+            <xpath expr="//field[@name='service_type_id']" position="after">
+                <xpath expr="//field[@name='vendor_id']" position="move"/>
+            </xpath>
             <xpath expr="//field[@name='date']" position="after">
               <field name="fuel"/>
+            </xpath>
+            <xpath expr="//field[@name='amount']" position="after">
+              <field name="amount_per_liter" attrs="{'invisible':[('amount_per_liter','==',0)]}"/>
             </xpath>
             <xpath expr="//field[@name='purchaser_id']" position="after">
                 <field name="previous_odometer_id" invisible="1"/>
@@ -23,9 +29,7 @@
                   <field name="mileage" attrs="{'invisible':[('mileage','==',0)]}"/>
                   <field name="odometer_unit" attrs="{'invisible':[('mileage','==',0)]}"/>
               </div>
-              <field name="fuel_economy" attrs="{'invisible':[('fuel_economy','==',0)]}"/>
-              <field name="fuel_economy_mpg" attrs="{'invisible':[('fuel_economy_mpg','==',0)]}"/>
-              <field name="price_per_liter" attrs="{'invisible':[('price_per_liter','==',0)]}"/>
+              <field name="fuel_economy_text" attrs="{'invisible':[('fuel_economy_text','==','')]}"/>
             </xpath>
         </field>
     </record>
@@ -57,7 +61,7 @@
                 <field name="fuel"/>
                 <field name="fuel_economy"/>
                 <field name="fuel_economy_mpg"/>
-                <field name="price_per_liter" optional="hide"/>
+                <field name="amount_per_liter" optional="hide"/>
             </xpath>
         </field>
     </record>

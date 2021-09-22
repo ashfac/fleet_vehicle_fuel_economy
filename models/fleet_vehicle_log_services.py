@@ -31,8 +31,12 @@ class FleetVehicleLogServices(models.Model):
         string="MPG",
         help="Fuel economoy in MPG")
 
-    price_per_liter = fields.Float(compute="_compute_price_per_liter", store=False, readonly=True,
-        string="Price/Liter",
+    fuel_economy_text = fields.Text(compute='_compute_fuel_economy_text', store=False, readonly=True,
+        string="Fuel Economy",
+        help="Fuel economoy in Liter/100 km / MPG")
+
+    amount_per_liter = fields.Float(compute="_compute_amount_per_liter", store=False, readonly=True,
+        string="Cost/Liter",
         help="Calculated price of fuel per liter")
 
     @api.onchange('vehicle_id', 'service_type_id', 'date')
@@ -118,6 +122,13 @@ class FleetVehicleLogServices(models.Model):
             else:
                 record['fuel_economy_mpg'] = 235.214583 / record.fuel_economy
 
+    @api.depends('fuel_economy')
+    def _compute_fuel_economy_text(self):
+        for record in self:
+            if record.fuel_economy == 0:
+                record['fuel_economy_text'] = ""
+            else:
+                record['fuel_economy_text'] = str(round(record.fuel_economy, 1)) + " / " + str(round(235.214583 / record.fuel_economy)) + "  (l/100 km / MPG)"
 
     @api.depends('fuel', 'mileage')
     def _compute_full_tank_mileage(self):
@@ -128,9 +139,9 @@ class FleetVehicleLogServices(models.Model):
                 record['full_tank_mileage'] = record.vehicle_id.fuel_tank_capacity * record.mileage / record.fuel
 
     @api.depends('fuel', 'amount')
-    def _compute_price_per_liter(self):
+    def _compute_amount_per_liter(self):
         for record in self:
             if record.fuel == 0:
-                record['price_per_liter'] = 0.0
+                record['amount_per_liter'] = 0.0
             else:
-                record['price_per_liter'] = record.amount / record.fuel
+                record['amount_per_liter'] = record.amount / record.fuel
