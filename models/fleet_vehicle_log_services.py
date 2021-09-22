@@ -35,12 +35,15 @@ class FleetVehicleLogServices(models.Model):
         string="Price/Liter",
         help="Calculated price of fuel per liter")
 
-    @api.onchange('vehicle_id', 'service_type_id')
+    @api.onchange('vehicle_id', 'service_type_id', 'date')
     def _get_previous_odometer_id(self):
         for record in self:
             FleetVehicalServices = self.env['fleet.vehicle.log.services']
-            previous_service = FleetVehicalServices.search([('vehicle_id', '=', record.vehicle_id.id), ('service_type_id', '=', record.service_type_id.id)],
-            limit=1, order='id desc')
+            previous_service = FleetVehicalServices.search([('vehicle_id', '=', record.vehicle_id.id)
+                                                          , ('service_type_id', '=', record.service_type_id.id)
+                                                          , ('date', '<', record.date)]
+                                                          , limit=1
+                                                          , order='id desc')
 
             if previous_service:
                 self.previous_odometer_id = previous_service.odometer_id
@@ -48,11 +51,17 @@ class FleetVehicleLogServices(models.Model):
 
             else:
                 FleetVehicalOdometer = self.env['fleet.vehicle.odometer']
-                previous_odometer = FleetVehicalOdometer.search([('vehicle_id', '=', record.vehicle_id.id)], limit=1, order='value desc')
+                previous_odometer = FleetVehicalOdometer.search([('vehicle_id', '=', record.vehicle_id.id)
+                                                               , ('date', '<', record.date)]
+                                                               , limit=1
+                                                               , order='value desc')
 
                 if previous_odometer:
                     self.previous_odometer_id = previous_odometer
                     _logger.info('_get_previous_odometer_id::previous_odometer_id(odometer) : %r = %r', previous_odometer.id, previous_odometer.value )
+                else:
+                    _logger.info('_get_previous_odometer_id::no previous odomoeter value found')
+                    self.previous_odometer_id = 0
 
     previous_odometer_id = fields.Many2one('fleet.vehicle.odometer', 'Odometer', default=_get_previous_odometer_id, store=True,
         help='Odometer measure of the vehicle at previous service interval of this type')
@@ -62,6 +71,8 @@ class FleetVehicleLogServices(models.Model):
         for record in self:
             if record.previous_odometer_id:
                 record.previous_odometer = record.previous_odometer_id.value
+            else:
+                record.previous_odometer = 0
 
     def _set_previous_odometer(self):
         for record in self:
